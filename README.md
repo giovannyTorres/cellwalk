@@ -17,13 +17,14 @@ print(result[["country", "year", "quarter", "value"]])
 
 ## Install
 
-Python 3.11+ and Pandas 2.2+ are required. Install from a checkout until the
-initial PyPI release has been verified:
+Python 3.11+ and Pandas 2.2+ are required. Version
+[0.1.0 is published on PyPI](https://pypi.org/project/cellwalk/0.1.0/), with
+installation from the public index verified in a fresh environment.
 
 ```bash
-python -m pip install .
-# After the first verified PyPI release:
 python -m pip install cellwalk
+# Reproduce the verified release:
+python -m pip install "cellwalk==0.1.0"
 # Optional XLSX reader:
 python -m pip install "cellwalk[xlsx]"
 ```
