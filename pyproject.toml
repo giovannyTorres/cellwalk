@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cellwalk"
-version = "0.1.0"
+version = "0.1.1"
 description = "Reconstruct irregular spreadsheet tables with explicit spatial cell relationships"
 readme = "README.md"
 requires-python = ">=3.11"

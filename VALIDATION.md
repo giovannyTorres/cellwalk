@@ -1,4 +1,4 @@
-# Local validation record — cellwalk 0.1.0
+# Local validation record — cellwalk 0.1.1
 
 Recorded from completed local checks on 2026-10-21 (UTC).
 These results are separate from GitHub CI and from public PyPI installation.
@@ -15,14 +15,38 @@ These results are separate from GitHub CI and from public PyPI installation.
 | Independent clean wheel and sdist installations and shipped examples | Passed |
 | Benchmark execution | Passed |
 
-**Tests:** 44 passed.
-**Statement coverage:** 100.00% (169 of 169 measured statements; 0 excluded lines). This is not a branch-coverage claim.
+**Tests:** 53 passed, including Hypothesis properties and nine XLSX extent
+regressions. Python 3.12.14, Pandas 3.0.6, openpyxl 3.1.5 on Linux.
+**Statement coverage:** 100.00% (185 of 185 measured statements; 0 excluded lines). This is not a branch-coverage claim.
 
 Wheel and sdist were installed separately in fresh virtual environments with declared runtime dependencies.
 The shipped examples ran with Python's `-I` flag, isolating imports from the repository checkout.
 These installations used local distribution files, not a public-index upload.
 
-## Recorded benchmark
+## XLSX extent benchmark — 0.1.1
+
+Identical 3-by-30 values were verified before timing. Formatting at row 200,000
+does not expand the grid to the worksheet's declared 6,000,000-cell rectangle.
+Formatting at column 16,384 likewise leaves the same 90-cell output. Formulas
+with and without cached values, merged ranges (including empty anchors),
+leading/interior blanks, zeros, booleans and entirely empty sheets have separate
+functional regression tests; no wall-clock threshold is asserted in CI.
+
+| Fixture | Grid cells | Median seconds | Peak traced bytes |
+|---|---:|---:|---:|
+| Clean sheet | 90 | 0.001957 | 144,620 |
+| Formatting at row 200,000 | 90 | 0.001988 | 153,589 |
+| Formatting at column 16,384 | 90 | 0.002060 | 143,015 |
+
+Five timing repetitions and a separate tracemalloc run include workbook parsing.
+The [raw measurements](benchmarks/xlsx_extent_results.json) record the Linux
+environment and all samples. These are small synthetic XLSX files; they do not
+predict performance for dense or heavily merged workbooks. Sparse inspection
+uses openpyxl's internal stored-cell mapping, isolated in one helper under the
+`openpyxl>=3.1,<4` dependency constraint. Worksheets containing formulas require
+a second load for cached results so their original geometry is preserved.
+
+## Recorded reconstruction benchmark — 0.1.0
 
 Environment: python: `3.13.5`; pandas: `3.0.6`; platform: `Windows-11-10.0.26200-SP0`.
 
@@ -54,6 +78,7 @@ python -m build
 python -m twine check dist/*
 python scripts/check_artifacts.py cellwalk
 python benchmarks/benchmark.py
+python benchmarks/xlsx_extent.py
 ```
 
 See [RELEASE.md](RELEASE.md) for publication status and the Trusted Publisher configuration.

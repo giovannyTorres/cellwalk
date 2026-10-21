@@ -27,6 +27,25 @@ def _integer(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+def _xlsx_extent(worksheet: Any) -> tuple[int, int, bool]:
+    """Find content bounds without expanding openpyxl's styled rectangle."""
+    nrows = ncolumns = 0
+    has_formulas = False
+    # openpyxl 3.1's public iter_rows() visits/creates the full max_row/max_column
+    # rectangle, including distant formatting. Keep sparse access isolated here;
+    # the optional dependency is constrained to the tested openpyxl major version.
+    for cell in worksheet._cells.values():
+        if cell.value is not None:
+            nrows = max(nrows, cell.row)
+            ncolumns = max(ncolumns, cell.column)
+            has_formulas = has_formulas or cell.data_type == "f"
+    # Merged ranges are explicit geometry, even when their anchor is empty.
+    for merged_range in worksheet.merged_cells.ranges:
+        nrows = max(nrows, merged_range.max_row)
+        ncolumns = max(ncolumns, merged_range.max_col)
+    return nrows, ncolumns, has_formulas
+
+
 @dataclass(frozen=True)
 class Cell:
     """A physical cell and its original value anchor, all coordinates zero-based."""
@@ -74,6 +93,8 @@ class CellGrid:
 
         Merged children retain their physical coordinate and the anchor's source
         coordinate. Values remain blank unless propagation is explicitly enabled.
+        Trailing cells with only formatting are excluded. Leading/interior blanks,
+        formula positions and explicit merged ranges retain their coordinates.
         Requires the optional ``xlsx`` extra (openpyxl).
         """
         if merged not in {"blank", "propagate"}:
@@ -82,7 +103,7 @@ class CellGrid:
             from openpyxl import load_workbook
         except ImportError as exc:
             raise ImportError("Install cellwalk[xlsx] to read XLSX files") from exc
-        workbook = load_workbook(path, data_only=True, keep_vba=False, keep_links=False)
+        workbook = load_workbook(path, data_only=False, keep_vba=False, keep_links=False)
         try:
             if (
                 isinstance(sheet, bool)
@@ -94,7 +115,16 @@ class CellGrid:
             ):
                 raise GridError("sheet must be an existing worksheet name or zero-based index")
             worksheet = workbook.worksheets[sheet] if isinstance(sheet, int) else workbook[sheet]
-            nrows, ncolumns = worksheet.max_row, worksheet.max_column
+            nrows, ncolumns, has_formulas = _xlsx_extent(worksheet)
+            if has_formulas:
+                # Formula definitions determine geometry even without saved caches.
+                # Read values separately so formulas still appear as cached results
+                # (or None), and never evaluate formulas ourselves.
+                workbook.close()
+                workbook = load_workbook(path, data_only=True, keep_vba=False, keep_links=False)
+                worksheet = (
+                    workbook.worksheets[sheet] if isinstance(sheet, int) else workbook[sheet]
+                )
             anchors: dict[Coordinate, Coordinate] = {}
             for merged_range in worksheet.merged_cells.ranges:
                 anchor = (merged_range.min_row - 1, merged_range.min_col - 1)

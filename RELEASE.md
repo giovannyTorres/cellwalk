@@ -1,5 +1,9 @@
 # Release procedure and publication state
 
+Prepared patch: **0.1.1**, with trailing XLSX formatting excluded from grid bounds.
+This patch is not recorded as published until its release workflow and a fresh
+public-index installation have been verified.
+
 Current version: **0.1.0**. **PyPI: PUBLISHED** at
 [cellwalk 0.1.0](https://pypi.org/project/cellwalk/0.1.0/).
 Installation from the public index was verified in a fresh environment, including

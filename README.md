@@ -112,8 +112,15 @@ value to every child. Both retain each physical coordinate and the original
 anchor's source coordinates. A subsequently selected propagated header therefore
 retains its child location and anchor location separately.
 
-The adapter uses openpyxl with `data_only=True`, `keep_vba=False`, and
-`keep_links=False`. It reads cached formula values; it never evaluates formulas,
+The adapter excludes trailing rows and columns containing only formatting.
+Leading and interior empty cells retain their physical coordinates, as do
+formula positions and explicit merged ranges. An entirely empty sheet becomes
+a zero-by-zero grid. It inspects openpyxl's sparse stored cells rather than
+iterating the worksheet's potentially inflated rectangular dimensions.
+
+The adapter uses openpyxl with `keep_vba=False` and `keep_links=False`. It reads
+formula definitions to determine geometry and, when formulas exist, reopens
+with `data_only=True` for cached values. It never evaluates formulas,
 executes macros or follows workbook links. A formula without a saved cached
 value appears as missing. Existing Excel numeric precision limits still apply;
 the library cannot recover precision already lost in the workbook. Workbooks

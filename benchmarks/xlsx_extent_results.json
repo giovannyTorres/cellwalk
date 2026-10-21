@@ -1,0 +1,70 @@
+{
+  "python": "3.12.14",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "openpyxl": "3.1.5",
+  "repeats": 5,
+  "notes": "Identical 3x30 values. Timings include workbook parsing; memory is a separate tracemalloc execution, not process RSS. Declared rectangles are recorded without materializing their empty cells. No timing assertions are used in tests.",
+  "clean": {
+    "declared_shape": [
+      3,
+      30
+    ],
+    "declared_rectangle_cells": 90,
+    "grid_cells": 90,
+    "from_xlsx": {
+      "seconds": [
+        0.0019573719999925743,
+        0.0019396550000010393,
+        0.0026345839999919463,
+        0.002242672999983597,
+        0.0019272270000101344
+      ],
+      "median_seconds": 0.0019573719999925743,
+      "min_seconds": 0.0019272270000101344,
+      "max_seconds": 0.0026345839999919463,
+      "traced_peak_bytes": 144620
+    }
+  },
+  "distant_row": {
+    "declared_shape": [
+      200000,
+      30
+    ],
+    "declared_rectangle_cells": 6000000,
+    "grid_cells": 90,
+    "from_xlsx": {
+      "seconds": [
+        0.0021205980000047475,
+        0.002218495999983361,
+        0.0019878779999942253,
+        0.0019377030000100604,
+        0.0019859849999761536
+      ],
+      "median_seconds": 0.0019878779999942253,
+      "min_seconds": 0.0019377030000100604,
+      "max_seconds": 0.002218495999983361,
+      "traced_peak_bytes": 153589
+    }
+  },
+  "distant_column": {
+    "declared_shape": [
+      3,
+      16384
+    ],
+    "declared_rectangle_cells": 49152,
+    "grid_cells": 90,
+    "from_xlsx": {
+      "seconds": [
+        0.0020889699999884215,
+        0.002054528000002165,
+        0.0021067769999945085,
+        0.002002369999985376,
+        0.002060447999980397
+      ],
+      "median_seconds": 0.002060447999980397,
+      "min_seconds": 0.002002369999985376,
+      "max_seconds": 0.0021067769999945085,
+      "traced_peak_bytes": 143015
+    }
+  }
+}
