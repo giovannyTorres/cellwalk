@@ -8,28 +8,28 @@
   "repeats": 5,
   "manual_pandas": {
     "seconds": [
-      0.15635959999963234,
-      0.18282240000007732,
-      0.1596415000003617,
-      0.15349849999984144,
-      0.15492059999996854
+      0.15817190000052506,
+      0.15980450000006385,
+      0.16150909999942087,
+      0.18125349999991158,
+      0.165297699999428
     ],
-    "median_seconds": 0.15635959999963234,
-    "min_seconds": 0.15349849999984144,
-    "max_seconds": 0.18282240000007732,
+    "median_seconds": 0.16150909999942087,
+    "min_seconds": 0.15817190000052506,
+    "max_seconds": 0.18125349999991158,
     "traced_peak_bytes": 1727924
   },
   "cellwalk": {
     "seconds": [
-      0.2126382000005833,
-      0.1899345000001631,
-      0.16682750000018132,
-      0.17364240000006248,
-      0.17090469999948255
+      0.20025879999957397,
+      0.17768940000041766,
+      0.17562079999970592,
+      0.1786179999999149,
+      0.1783093000003646
     ],
-    "median_seconds": 0.17364240000006248,
-    "min_seconds": 0.16682750000018132,
-    "max_seconds": 0.2126382000005833,
+    "median_seconds": 0.1783093000003646,
+    "min_seconds": 0.17562079999970592,
+    "max_seconds": 0.20025879999957397,
     "traced_peak_bytes": 6400520
   },
   "notes": "Identical reconstructed values and data coordinates. Library additionally returns all header physical and anchor coordinates and validates bounds/rules. Memory measured separately with tracemalloc, not process RSS."

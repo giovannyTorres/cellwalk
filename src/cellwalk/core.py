@@ -79,7 +79,7 @@ class CellGrid:
         if merged not in {"blank", "propagate"}:
             raise GridError("merged must be 'blank' or 'propagate'")
         try:
-            from openpyxl import load_workbook  # type: ignore[import-untyped]
+            from openpyxl import load_workbook
         except ImportError as exc:
             raise ImportError("Install cellwalk[xlsx] to read XLSX files") from exc
         workbook = load_workbook(path, data_only=True, keep_vba=False, keep_links=False)
