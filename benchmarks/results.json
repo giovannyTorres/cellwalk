@@ -1,0 +1,36 @@
+{
+  "python": "3.13.5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "pandas": "3.0.6",
+  "data_rows": 2000,
+  "input_cells": 10010,
+  "output_records": 8000,
+  "repeats": 5,
+  "manual_pandas": {
+    "seconds": [
+      0.15635959999963234,
+      0.18282240000007732,
+      0.1596415000003617,
+      0.15349849999984144,
+      0.15492059999996854
+    ],
+    "median_seconds": 0.15635959999963234,
+    "min_seconds": 0.15349849999984144,
+    "max_seconds": 0.18282240000007732,
+    "traced_peak_bytes": 1727924
+  },
+  "cellwalk": {
+    "seconds": [
+      0.2126382000005833,
+      0.1899345000001631,
+      0.16682750000018132,
+      0.17364240000006248,
+      0.17090469999948255
+    ],
+    "median_seconds": 0.17364240000006248,
+    "min_seconds": 0.16682750000018132,
+    "max_seconds": 0.2126382000005833,
+    "traced_peak_bytes": 6400520
+  },
+  "notes": "Identical reconstructed values and data coordinates. Library additionally returns all header physical and anchor coordinates and validates bounds/rules. Memory measured separately with tracemalloc, not process RSS."
+}
