@@ -66,6 +66,7 @@ These small, synthetic operational fixtures make the workflows reproducible with
 From a checkout, after installing the package:
 
 ```sh
+python -m pip install "cellwalk[xlsx]==0.1.1"
 python examples/comparison.py
 python examples/cookbook.py
 ```

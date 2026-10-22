@@ -34,6 +34,9 @@ def main() -> None:
 
             run("-m", "pip", "install", "--disable-pip-version-check", str(artifact))
             run("-I", "-c", f"import {args.package}; print({args.package}.__file__)")
+            # Exercise the base install before adding the documented workbook extra.
+            run("-I", str(root / "examples" / "quickstart.py"))
+            run("-m", "pip", "install", "--disable-pip-version-check", f"{artifact}[xlsx]")
             for example in examples:
                 run("-I", str(example))
             print("CLEAN INSTALL PASSED:", artifact.name, flush=True)
