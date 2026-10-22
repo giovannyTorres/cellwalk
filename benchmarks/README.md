@@ -1,42 +1,58 @@
-# Reproducible reconstruction benchmark
+# Reproduce the cellwalk benchmarks
 
-```bash
-python benchmarks/benchmark.py --rows 2000 --repeat 5
+[Measured results](RESULTS.md) · [Raw measurements](latest.json) · [Driver](reproduce.py)
+
+## One-command measurement
+
+Clone this repository and use CPython 3.13.5 to reproduce the recorded environment. From the repository root:
+
+```sh
+python -m pip install -r benchmarks/requirements.txt
+python benchmarks/reproduce.py
 ```
 
-The input has 2,000 entity rows beneath two header rows and four value columns:
-10,010 physical cells and 8,000 output records. Year labels span pairs of
-quarter columns. The manual Pandas recipe explicitly fills the year heading
-row, then loops through data coordinates and assembles tidy values. An assertion
-checks that data coordinates, values, years, quarters and entity labels agree
-with cellwalk before timing.
+The requirements file pins the public package and runtime dependencies measured in this run. To benchmark a changed checkout instead, install it with `python -m pip install -e .` after those pins and record that difference. The driver records the imported distribution version, base commit and SHA-256 digests of the benchmark and example sources with line endings normalized to LF.
 
-Each implementation warms up once, followed by five perf_counter measurements.
-tracemalloc peak is measured in a separate execution, excludes some native
-allocations, and is not process RSS. [results.json](results.json) is the
-authoritative latest run and includes environment, raw samples, median and
-range, plus memory for each workflow.
+The default run writes `benchmarks/latest.json` and regenerates `benchmarks/RESULTS.md`. It runs all comparison and cookbook assertions first, then checks each timed workload against its reference. A failing comparison aborts before publishing new measurements.
 
-The library also stores every source cell, validates rules and boundaries, and
-returns physical and anchor coordinates for all three associated headers. The
-manual reference only returns reconstructed values and data coordinates. The
-recorded run shows additional time and memory cost for these capabilities;
-no performance advantage is claimed. A specialized recipe may be preferable
-when its layout is fixed and no reusable provenance is needed. Results from one
-synthetic layout should not be generalized to every workbook.
-
-## XLSX dimensions with distant formatting
-
-```bash
-python benchmarks/xlsx_extent.py --repeat 5
+```sh
+# Small correctness/runner smoke check; writes only ignored smoke.json:
+python benchmarks/reproduce.py --quick
+# More observations on the same three sizes:
+python benchmarks/reproduce.py --repeat 9
 ```
 
-This separate benchmark saves identical 3-by-30 values in a clean sheet, a sheet
-with formatting at row 200,000, and a sheet with formatting at column 16,384.
-It verifies every returned value and the 3-by-30 grid before timing. The reported
-worksheet rectangles include respectively 90, 6,000,000 and 49,152 cells; only
-90 grid cells are materialized in each case. Results include full workbook load
-time and a separate tracemalloc peak, and avoid constructing the old inflated
-grid merely to measure it. [xlsx_extent_results.json](xlsx_extent_results.json)
-records the current measurements; these small synthetic files do not establish
-load performance for dense or heavily merged workbooks.
+## Inputs and equivalent work
+
+n data rows beneath two header layers, four value columns and one entity column. The result contains 4*n observations. Workbook I/O is excluded.
+
+The input generator is deterministic and included in the driver. Input construction, package imports, correctness assertions and output serialization are outside the measured operation. The fixture setup and reused state are the same for both compared operations.
+
+Values, associated labels and data-cell coordinates are compared exactly to an explicit pandas coordinate recipe; dtype equality is disabled. The cookbook additionally verifies merged-anchor coordinates.
+
+This dense fixed-layout workload excludes sparse XLSX ingestion and arbitrary maps. The package returns more coordinate fields than the baseline, so output construction differs in scope.
+
+## Timing and memory
+
+- Two warmups per operation, then five timed rounds by default.
+- Interleaved operations with a rotating starting order reduce fixed-order drift.
+- `perf_counter` measures elapsed time; garbage collection happens before each sample and outside its timer.
+- The standard paired driver retains the returned object until the timer stops. The whyempty six-scenario driver times batches of three operations; its full implementation is in benchmark.py.
+- Allocation peaks use two separate `tracemalloc` passes with a live result. They exclude the already constructed inputs and can exclude native allocations; they are not total process RSS.
+- Raw observations, medians, minimum/maximum times, package/Python/platform/CPU details and checked fixture outcomes are in latest.json. Whyempty retains the original six-scenario raw schema and computes its medians there.
+
+Run on an otherwise idle machine. Results vary with host load, CPU state, allocator, Python, dependency versions, data cardinality, width and dtype. These are single-host measurements with no confidence intervals. They are not service-level guarantees or a comparison against every possible optimized recipe.
+
+## Accuracy and ease of use
+
+Accuracy here means asserted agreement on the documented output fields, not a statistical significance claim or proof over all inputs. The core tests cover additional boundary cases and can be rerun with `python -m pip install -e ".[dev]"` followed by `python -m pytest`.
+
+The driver counts physical lines and AST statements in the checked comparison functions. Fixtures, imports and assertion scaffolding are excluded. This code-size proxy is inspectable; it does not measure learning time or productivity. The library may perform more diagnostic work and may take more source lines in a given example.
+
+## Historical and specialized runs
+
+The original `benchmark.py` and `results.json` are retained with their original workload and environment. `RESULTS.md` and `latest.json` identify the new measurements. Other benchmark scripts in this directory cover specialized cases and are not silently combined into the main table.
+
+Grid snapshots and provenance use memory and time. A manual pandas recipe is shorter for some already understood rectangular layouts.
+
+[What the package adds](../docs/comparison.md) · [Practical recipes](../docs/cookbook.md)

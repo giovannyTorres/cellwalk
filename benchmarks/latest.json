@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-22T05:56:10.188647+00:00",
+  "package": "cellwalk",
+  "versions": {
+    "cellwalk": "0.1.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.4",
+    "openpyxl": "3.1.5"
+  },
+  "python": "3.13.5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "machine": "AMD64",
+  "processor": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+  "logical_cpus": 16,
+  "base_commit": "e9edf962f30473db2db7ddd95e9ed4658882de16",
+  "source_sha256_lf": {
+    "benchmarks/reproduce.py": "0f6840652ff18593277e1eb208edf806b48d2a86bd53cf7efd8820c86d6d383f",
+    "benchmarks/benchmark.py": "944b8404bb70a2ede6efe8a139173327464d1b65c2f593cd2bfa14e8241f92d5",
+    "examples/comparison.py": "ff311f3575db51ed569e77cb807f3e7733ce7c8ef22739ef874f0b7add56f231",
+    "examples/cookbook.py": "16c357e342e294f2a3063441e95141a613ffc05e9b31f34b80970ff7a270a21a"
+  },
+  "command": "python benchmarks/reproduce.py --repeat 5",
+  "quick": false,
+  "repeats": 5,
+  "warmup_per_operation": 2,
+  "memory_repeats": 2,
+  "methodology": {
+    "time": "interleaved rotating order; perf_counter; GC collection before sample outside timer; input construction excluded",
+    "memory": "separate tracemalloc passes, result alive; Python allocation peak, not total RSS; input construction excluded",
+    "accuracy": "differential assertions before timing; comparison and cookbook assertions also executed",
+    "ease_of_use": "physical lines and AST statements in comparison functions, excluding fixtures and imports; a code-size proxy, not a user study",
+    "limitations": "deterministic synthetic workloads; one host; diagnostics differ in scope; no statistical confidence intervals or R execution comparison"
+  },
+  "comparison_code_size": {
+    "baseline": {
+      "physical_lines": 11,
+      "statements": 4
+    },
+    "library": {
+      "physical_lines": 9,
+      "statements": 1
+    }
+  },
+  "workloads": [
+    {
+      "input_size": 100,
+      "accuracy": {
+        "output_records": 400,
+        "values_and_positions_equal": true
+      },
+      "measurements": {
+        "baseline": {
+          "seconds": [
+            0.006738900000527792,
+            0.006566000000020722,
+            0.006471599999713362,
+            0.007407500000226719,
+            0.006631999999626714
+          ],
+          "median_seconds": 0.006631999999626714,
+          "min_seconds": 0.006471599999713362,
+          "max_seconds": 0.007407500000226719,
+          "traced_peak_bytes": [
+            142988,
+            127624
+          ],
+          "median_peak_bytes": 135306.0
+        },
+        "cellwalk": {
+          "seconds": [
+            0.006620099999963713,
+            0.006937800000741845,
+            0.006684499999209947,
+            0.006844599999567436,
+            0.006853900000351132
+          ],
+          "median_seconds": 0.006844599999567436,
+          "min_seconds": 0.006620099999963713,
+          "max_seconds": 0.006937800000741845,
+          "traced_peak_bytes": [
+            347580,
+            349284
+          ],
+          "median_peak_bytes": 348432.0
+        }
+      }
+    },
+    {
+      "input_size": 500,
+      "accuracy": {
+        "output_records": 2000,
+        "values_and_positions_equal": true
+      },
+      "measurements": {
+        "baseline": {
+          "seconds": [
+            0.03174959999978455,
+            0.030292499999632128,
+            0.030139000000417582,
+            0.031173200000012002,
+            0.03335039999910805
+          ],
+          "median_seconds": 0.031173200000012002,
+          "min_seconds": 0.030139000000417582,
+          "max_seconds": 0.03335039999910805,
+          "traced_peak_bytes": [
+            448052,
+            448372
+          ],
+          "median_peak_bytes": 448212.0
+        },
+        "cellwalk": {
+          "seconds": [
+            0.03163799999947514,
+            0.03430980000030104,
+            0.032330199999705656,
+            0.03207070000007661,
+            0.03149140000004991
+          ],
+          "median_seconds": 0.03207070000007661,
+          "min_seconds": 0.03149140000004991,
+          "max_seconds": 0.03430980000030104,
+          "traced_peak_bytes": [
+            1619448,
+            1621176
+          ],
+          "median_peak_bytes": 1620312.0
+        }
+      }
+    },
+    {
+      "input_size": 2000,
+      "accuracy": {
+        "output_records": 8000,
+        "values_and_positions_equal": true
+      },
+      "measurements": {
+        "baseline": {
+          "seconds": [
+            0.12458909999986645,
+            0.1195532000001549,
+            0.12844010000026174,
+            0.12156299999969633,
+            0.11981700000069395
+          ],
+          "median_seconds": 0.12156299999969633,
+          "min_seconds": 0.1195532000001549,
+          "max_seconds": 0.12844010000026174,
+          "traced_peak_bytes": [
+            1747092,
+            1747412
+          ],
+          "median_peak_bytes": 1747252.0
+        },
+        "cellwalk": {
+          "seconds": [
+            0.12929460000032122,
+            0.1264710000004925,
+            0.13415850000001228,
+            0.1342077999997855,
+            0.13038910000068427
+          ],
+          "median_seconds": 0.13038910000068427,
+          "min_seconds": 0.1264710000004925,
+          "max_seconds": 0.1342077999997855,
+          "traced_peak_bytes": [
+            6410488,
+            6412216
+          ],
+          "median_peak_bytes": 6411352.0
+        }
+      }
+    }
+  ]
+}

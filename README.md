@@ -1,170 +1,116 @@
 # cellwalk
 
-Reconstruct irregular spreadsheet tables by associating data cells with explicit
-spatial headers. Retain physical coordinates and merged-cell anchor provenance
-for data values and every associated header.
+**Reconstruct spreadsheet tables from where their headers actually live.**
+
+A report has years spanning quarter columns, country labels at the left and separate tables on the same sheet. cellwalk associates selected cells with explicit headers and preserves physical and merged-anchor coordinates.
+
+## Try it in two minutes
+
+Requires Python 3.11+ with pandas 2.2+. Install the [published release](https://pypi.org/project/cellwalk/0.1.1/):
+
+```sh
+python -m pip install "cellwalk==0.1.1"
+```
+
+Copy this complete example into a Python session or save it as `demo.py` and run `python demo.py`:
 
 ```python
 import pandas as pd
+
 from cellwalk import CellGrid
 
-raw = pd.DataFrame([[None, 2024, None], [None, "Q1", "Q2"], ["Mexico", 10, 20]], dtype=object)
-base = CellGrid.from_dataframe(raw).data(rows=[2], columns=[1, 2])
-headers = base.headers_above("year", row=0, span="right").headers_above("quarter", row=1)
-result = headers.headers_left("country", column=0).to_frame()
-print(result[["country", "year", "quarter", "value"]])
+raw = pd.DataFrame(
+    [
+        [None, 2024, None, 2025, None],
+        [None, "Q1", "Q2", "Q1", "Q2"],
+        ["Mexico", 10, 20, 30, 40],
+        ["Chile", 15, 25, 35, 45],
+    ],
+    dtype=object,
+)
+result = (
+    CellGrid.from_dataframe(raw)
+    .data(rows=[2, 3], columns=[1, 2, 3, 4])
+    .headers_above("year", row=0, span="right")
+    .headers_above("quarter", row=1)
+    .headers_left("country", column=0)
+    .to_frame()
+)
+assert len(result) == 8
+assert result["year"].tolist() == [2024, 2024, 2025, 2025] * 2
+print(result[["country", "year", "quarter", "value", "row", "column"]])
 ```
 
-## Install
+The example reconstructs **2 quarterly observations**: Mexico / 2024 / Q1 / 10 and Mexico / 2024 / Q2 / 20.
 
-Python 3.11+ and Pandas 2.2+ are required. Version
-[0.1.0 is published on PyPI](https://pypi.org/project/cellwalk/0.1.0/), with
-installation from the public index verified in a fresh environment.
+## What you gain
 
-```bash
-python -m pip install cellwalk
-# Reproduce the verified release:
-python -m pip install "cellwalk==0.1.0"
-# Optional XLSX reader:
-python -m pip install "cellwalk[xlsx]"
-```
+Compose spatial header associations, explicit region boundaries and arbitrary coordinate maps. Every output value and header retains its physical and anchor positions.
 
-There is no dependency on R or sibling projects, runtime service, or telemetry.
+| Existing approach | What this package adds | Tradeoff |
+|---|---|---|
+| Pandas indexing, `melt` and MultiIndex reshape known rectangles; openpyxl reads workbook cells and merged ranges. | Header-cell coordinates, original merged-anchor coordinates, bounds validation and composable mappings. | Grid snapshots and provenance use memory and time. A manual pandas recipe is shorter for some already understood rectangular layouts. |
 
-## Coordinates, bounds and navigation
+[Run the side-by-side comparison](docs/comparison.md): both implementations are included and their shared outputs are asserted equal. [unpivotr](https://nacnudus.github.io/unpivotr/) inspires spatial header association. This package implements a focused subset; formatting, HTML and automatic partitioning remain outside its scope.
 
-All coordinates are **zero-based positions**. DataFrame index and column labels
-are ignored as geometry, so duplicate labels are supported. `Cell` exposes
-`row`, `column`, `value`, `source_row`, and `source_column`. For a DataFrame cell,
-the source anchor equals its physical coordinate. Grid operations return new
-grids and do not modify inputs or previous selections.
+## Solve a real workflow problem
 
-| API | Behavior |
+These small, synthetic operational fixtures make the workflows reproducible without external services or private records. Each recipe includes expected results and a failure or interpretation boundary.
+
+| Recipe | Verified outcome |
 |---|---|
-| `CellGrid.from_dataframe(frame)` | Snapshot cell scalars without whole-array coercion |
-| `grid.cell(row, column)` | Fetch a cell inside current bounds |
-| `grid.within(row_start, row_stop, column_start, column_stop)` | Restrict navigation to a half-open subrectangle |
-| `grid.above/below/left/right(row, column, skip_blank=True)` | Find nearest cell in that direction; return `None` at the boundary |
-| `grid.data(rows=[...], columns=[...], include_blank=False)` | Select explicit Cartesian-product target positions |
-| `grid.headers_above(name, row=..., span="none", missing="raise")` | Attach a fixed header row |
-| `grid.headers_left(name, column=..., span="none", missing="raise")` | Attach a fixed header column |
-| `grid.associate(name, mapping, missing="raise")` | Map selected data coordinates to arbitrary header coordinates |
-| `grid.to_frame()` | Materialize records with all value and coordinate provenance |
+| [Unpivot a layered quarterly report](docs/cookbook.md#quarterly-sales) | Associate each layer explicitly and verify both year values point to the original year header. |
+| [Keep an adjacent report out of the result](docs/cookbook.md#adjacent-tables) | Restrict the grid to the intended rectangle, carry the row heading down and reconstruct only the two sales values. |
+| [Preserve merged Excel header provenance](docs/cookbook.md#merged-workbook-headers) | Create a temporary workbook, propagate merged values on read, and verify physical columns [1,2] both retain anchor column 1. |
 
-Bounds use excluded stops, like Python slicing, and can only narrow an existing
-region. Navigation and spans cannot cross them. `within()` clears targets and
-associations; call it before `data()`. Data selection follows the supplied row
-order, then column order, and clears old associations when repeated. Use
-separate grids for adjacent tables. Empty selections return an empty output
-with the expected schema.
+From a checkout, after installing the package:
 
-Structural blanks are scalar missing values or empty/whitespace-only strings.
-Zero and False are values. Blank data cells are omitted by default;
-`include_blank=True` preserves them. `skip_blank=False` navigation returns the
-immediate physical neighbor, even if blank.
-
-## Explicit header rules
-
-`headers_above` requires the specified row to be above every target. By default,
-the header comes from the exact target column. `span="right"` explicitly fills a
-blank heading from the nearest nonblank header at its left on that same row,
-stopping at the region boundary. This supports year spans above quarterly
-headings without guessing header levels. Add another named association for each
-level.
-
-`headers_left` similarly requires a column left of every target. Its opt-in
-`span="down"` carries a nonblank heading from above within that column. Default
-`span="none"` never infers a span. Missing/blank headers raise `GridError`;
-`missing="none"` retains targets with an unassigned header and null header
-coordinates.
-
-For nonrectangular layouts, use an explicit mapping:
-
-```python
-selected = CellGrid.from_dataframe(raw).data(rows=[2], columns=[1, 2])
-mapped = selected.associate("year", {(2, 1): (0, 1), (2, 2): (0, 1)})
+```sh
+python examples/comparison.py
+python examples/cookbook.py
 ```
 
-Mappings may choose headers in any direction but must refer to selected data
-cells and headers inside bounds. No result values are hardcoded; the mapping
-specifies source relationships. See [examples/nonrectangular.py](examples/nonrectangular.py).
+The workbook recipe needs `python -m pip install "cellwalk[xlsx]==0.1.1"`. Its XLSX fixture is created and removed locally.
 
-## Output and provenance
+## Measured performance, accuracy and usability
 
-`to_frame()` always includes `row`, `column`, `source_row`, `source_column`, and
-`value`. Each header named `year`, for example, adds `year`, `year_row`,
-`year_column`, `year_source_row`, and `year_source_column`. The first coordinates
-identify the associated physical cell; source coordinates identify its value's
-anchor. Header names colliding with these metadata fields or another generated
-field raise an error. Object-backed columns avoid rounding large integers or
-coercing original mixed scalars when another record is missing. Cast to desired
-analysis dtypes explicitly after reconstruction.
+Recorded on Windows-11-10.0.26200-SP0, CPython 3.13.5, with five rotating timed rounds. At the largest measured input size (2,000; see workload definition):
 
-## Optional XLSX reading and merged cells
+| Compared operation | Baseline median ms | Package median ms | Package / baseline |
+|---|---:|---:|---:|
+| Package / manual recipe | 121.563 | 130.389 | 1.07x |
 
-```python
-grid = CellGrid.from_xlsx("report.xlsx", sheet="Data", merged="propagate")
-```
+Ratio = package median / baseline median; above 1 means higher latency. The package performs the extra diagnostic or provenance work described above. These single-host synthetic results have no universal speed guarantee. Allocation measurements and the smaller scales are in the full table.
 
-`sheet` is a worksheet name or zero-based index. `merged="blank"`, the default,
-keeps nonanchor merged children empty. `merged="propagate"` supplies the anchor
-value to every child. Both retain each physical coordinate and the original
-anchor's source coordinates. A subsequently selected propagated header therefore
-retains its child location and anchor location separately.
+[Measured table](benchmarks/RESULTS.md) · [Raw repeated samples](benchmarks/latest.json) · [Reproduction instructions](benchmarks/README.md)
 
-The adapter excludes trailing rows and columns containing only formatting.
-Leading and interior empty cells retain their physical coordinates, as do
-formula positions and explicit merged ranges. An entirely empty sheet becomes
-a zero-by-zero grid. It inspects openpyxl's sparse stored cells rather than
-iterating the worksheet's potentially inflated rectangular dimensions.
+Accuracy means agreement on the stated fixture outputs: Values, associated labels and data-cell coordinates are compared exactly to an explicit pandas coordinate recipe; dtype equality is disabled. The cookbook additionally verifies merged-anchor coordinates. Code-size counts are an inspectable usability proxy; no developer-time study was performed.
 
-The adapter uses openpyxl with `keep_vba=False` and `keep_links=False`. It reads
-formula definitions to determine geometry and, when formulas exist, reopens
-with `data_only=True` for cached values. It never evaluates formulas,
-executes macros or follows workbook links. A formula without a saved cached
-value appears as missing. Existing Excel numeric precision limits still apply;
-the library cannot recover precision already lost in the workbook. Workbooks
-are closed after reading, and source files are never saved or modified.
+## Scope and limits
 
-## Use cases, alternatives and limitations
+- All coordinates are zero-based. Call within() before data() to bound a region.
+- Header spans are opt-in. Blank data cells are omitted by default; include_blank=True retains them.
+- The XLSX extra reads saved values. Formulas need cached results and are never calculated by cellwalk.
+- The used grid is held in memory. A genuinely distant populated cell or merged range can still enlarge it.
 
-Use cellwalk for layered period/country reports, grouped row headings, sparse
-header geometry, adjacent tables with explicit regions, and merged headings
-whose anchor provenance matters. [unpivotr](https://github.com/nacnudus/unpivotr)
-inspired its spatial approach. Pandas melt/MultiIndex, Polars unpivot and
-openpyxl already solve reshaping and cell access. cellwalk combines them into
-explicit header association and provenance; see [RESEARCH.md](RESEARCH.md).
+## Documentation
 
-Version 0.1.0 does not infer table boundaries, recognize formatting/OCR/HTML,
-guess header meaning, or provide a Polars backend. It stores the whole grid in
-memory, including the worksheet's used dimensions, so heavily formatted large
-workbooks may require preprocessing. Header spans continue within the selected
-region until another nonblank header; choose bounds or explicit mappings when
-blank gaps have a different meaning. Mutable objects inside DataFrame cells
-remain caller-owned; avoid modifying them after creating a grid.
+- [Start here](docs/index.md): choose a workflow and find the relevant guide.
+- [Comparison and alternatives](docs/comparison.md): full code, shared behavior and added outputs.
+- [Cookbook](docs/cookbook.md): three complete problem-solving recipes.
+- [API and behavioral contracts](docs/api.md): exact semantics and errors.
+- [Benchmark methodology](benchmarks/README.md): inputs, correctness checks, environment and limits.
+- [Research and upstream credit](RESEARCH.md): R inspiration, existing Python tools and scope decisions.
 
-## Validation and benchmark
+## Develop and validate
 
-```bash
+```sh
 python -m pip install -e ".[dev]"
-python -m pytest --cov=cellwalk --cov-report=term-missing
+python scripts/check_docs.py
+python -m pytest
 python -m ruff check .
+python -m ruff format --check .
 python -m mypy src
-python examples/quickstart.py
-python examples/nonrectangular.py
-python benchmarks/benchmark.py --rows 2000 --repeat 5
 ```
 
-Tests cover all directions, boundaries, multi-level and nonrectangular headers,
-missing cells, duplicate labels, exact large integer round trips, generated
-dimensions, and temporary XLSX merged/formula fixtures. The benchmark compares
-equivalent values and data coordinates with a manual Pandas coordinate recipe,
-then times repeated runs and separately measures traced Python memory.
-[Raw results](benchmarks/results.json) and [methodology](benchmarks/README.md)
-include environment, spread and the cost of additional provenance. No speed
-advantage is claimed.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Original code is MIT licensed; upstream
-inspiration does not imply affiliation. Proposed 0.2.0 work: selection by
-explicit cell predicates, indexed navigation for large sparse grids and a
-streaming XLSX region reader.
+MIT licensed. Contributions should include a reproducing example and the expected behavior. See [CONTRIBUTING.md](CONTRIBUTING.md).
